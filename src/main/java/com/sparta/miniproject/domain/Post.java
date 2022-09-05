@@ -24,6 +24,8 @@ public class Post {
     @Column(nullable = false)
     private String content;
 
+    @Column(nullable = true)
+    private String imgUrl;
 
     public Post(PostRequestDto requestDto){               //생성자  13분 32초
         this.title = requestDto.getTitle();
@@ -33,6 +35,7 @@ public class Post {
     public void update(PostRequestDto requestDto){
         this.title = requestDto.getTitle();
         this.content = requestDto.getContent();
+        this.imgUrl = requestDto.getImgUrl();
 
     }
 }
