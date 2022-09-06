@@ -3,6 +3,7 @@ package com.sparta.miniproject.service;
 import com.sparta.miniproject.controller.request.PostRequestDto;
 import com.sparta.miniproject.controller.response.PostResponseDto;
 import com.sparta.miniproject.controller.response.ResponseDto;
+import com.sparta.miniproject.domain.Member;
 import com.sparta.miniproject.domain.Post;
 import com.sparta.miniproject.jwt.TokenProvider;
 import com.sparta.miniproject.repository.PostRepository;
@@ -11,8 +12,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -23,10 +27,11 @@ public class PostService {
 
     private final PostRepository postRepository;           //의존성 주입
     private final TokenProvider tokenProvider;
+    private final S3UploaderService s3UploaderService;
 
     //게시글 작성
     @Transactional
-    public ResponseDto<?> createPost(PostRequestDto requestDto, HttpServletRequest request){      //controller에서 매개변수 받아올 때 같은 타입으로
+    public ResponseDto<?> createPost(PostRequestDto requestDto, MultipartFile multipartFile, HttpServletRequest request){      //controller에서 매개변수 받아올 때 같은 타입으로
         if (null == request.getHeader("Refresh-Token")) {
             return ResponseDto.fail("MEMBER_NOT_FOUND",
                     "로그인이 필요합니다.");
@@ -37,17 +42,35 @@ public class PostService {
                     "로그인이 필요합니다.");
         }
 
+        Member member = validateMember(request);
+        if (null == member) {
+            return ResponseDto.fail("INVALID_TOKEN", "Token이 유효하지 않습니다.");
+        }
+
+        String FileName = null;
+        if (!multipartFile.isEmpty()) {
+            try {
+                FileName = s3UploaderService.uploadFiles(multipartFile, "image");
+                System.out.println(FileName);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
         Post post = Post.builder()
                 .title(requestDto.getTitle())
                 .content(requestDto.getContent())
+                .imgUrl(FileName)
+                .member(member)
                 .build();
         postRepository.save(post);
         return ResponseDto.success(
                 PostResponseDto.builder()
                         .postId(post.getPostId())
-
                         .title(post.getTitle())
                         .content(post.getContent())
+                        .author(post.getMember().getNickname())
+                        .imgUrl(FileName)
                         .createdAt(post.getCreatedAt())
                         .modifiedAt(post.getModifiedAt())
                         .build()
@@ -59,9 +82,7 @@ public class PostService {
     //전체게시글 조회
     @Transactional(readOnly = true)
     public ResponseDto<?> getAllPost() {
-
         return ResponseDto.success(postRepository.findAllByOrderByModifiedAtDesc());
-//        return ResponseDto.success(listResponse.getPostListResponse(postList));
     }
 
 
@@ -84,20 +105,43 @@ public class PostService {
 
     //게시글 수정
     @Transactional
-    public PostResponseDto updatePost(Long postId, PostRequestDto requestDto){
-        Post post = postRepository.findById(postId).orElseThrow(
-                () -> new IllegalArgumentException("게시글이 존재하지 않습니다.")
-        );
-        post.update(requestDto);
-        postRepository.save(post);
+    public ResponseDto<Post> updatePost(Long postId, PostRequestDto requestDto, MultipartFile multipartFile, HttpServletRequest request){
+        if (null == request.getHeader("Refresh-Token")) {
+            return ResponseDto.fail("MEMBER_NOT_FOUND",
+                    "로그인이 필요합니다.");
+        }
 
-        return PostResponseDto.builder()
-                .postId(post.getPostId())
-                .title(post.getTitle())
-                .content(post.getContent())
-                .createdAt(post.getCreatedAt())
-                .modifiedAt(post.getModifiedAt())
-                .build();
+        if (null == request.getHeader("Authorization")) {
+            return ResponseDto.fail("MEMBER_NOT_FOUND",
+                    "로그인이 필요합니다.");
+        }
+
+        Member member = validateMember(request);
+        if (null == member) {
+            return ResponseDto.fail("INVALID_TOKEN", "Token이 유효하지 않습니다.");
+        }
+
+        String FileName = null;
+        if (!multipartFile.isEmpty()) {
+            try {
+                FileName = s3UploaderService.uploadFiles(multipartFile, "image");
+                System.out.println(FileName);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        Post post = isPresentPost(postId);
+        if (null == post) {
+            return ResponseDto.fail("NOT_FOUND", "존재하지 않는 게시글 id 입니다.");
+        }
+
+        if (post.validateMember(member)) {
+            return ResponseDto.fail("BAD_REQUEST", "작성자만 수정할 수 있습니다.");
+        }
+        requestDto.setImgUrl(FileName);
+        post.update(requestDto);
+        return ResponseDto.success(post);
     }
 
     //게시글 삭제
@@ -107,6 +151,20 @@ public class PostService {
                 () -> new IllegalArgumentException("게시글이 존재하지 않습니다.")
         );
         postRepository.deleteById(postId);
+    }
+
+    @Transactional
+    public Member validateMember(HttpServletRequest request) {
+        if (!tokenProvider.validateToken(request.getHeader("Refresh-Token"))) {
+            return null;
+        }
+        return tokenProvider.getMemberFromAuthentication();
+    }
+
+    @Transactional(readOnly = true)
+    public Post isPresentPost(Long id) {
+        Optional<Post> optionalPost = postRepository.findById(id);
+        return optionalPost.orElse(null);
     }
 
 }

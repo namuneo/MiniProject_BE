@@ -29,6 +29,10 @@ public class Post extends Timestamped{
     @Column(nullable = true)
     private String imgUrl;
 
+    @JoinColumn(name = "member_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    private Member member;
+
 //    public Post(PostRequestDto requestDto){               //생성자  13분 32초
 //        this.title = requestDto.getTitle();
 //        this.content =requestDto.getContent();
@@ -39,5 +43,9 @@ public class Post extends Timestamped{
         this.content = requestDto.getContent();
         this.imgUrl = requestDto.getImgUrl();
 
+    }
+
+    public boolean validateMember(Member member) {
+        return !this.member.equals(member);
     }
 }

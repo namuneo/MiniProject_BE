@@ -32,6 +32,7 @@ public class SecurityConfiguration {
     private final UserDetailsServiceImpl userDetailsService;
     private final AuthenticationEntryPointException authenticationEntryPointException;
     private final AccessDeniedHandlerException accessDeniedHandlerException;
+    private final WebConfig webConfig;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -41,7 +42,7 @@ public class SecurityConfiguration {
     @Bean
     @Order(SecurityProperties.BASIC_AUTH_ORDER)
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http.cors();
+//        http.cors().configurationSource(webConfig);
 
         http.csrf().disable()
 

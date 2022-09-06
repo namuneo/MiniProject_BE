@@ -7,6 +7,7 @@ import com.sparta.miniproject.service.PostService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.context.annotation.RequestScope;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
@@ -19,8 +20,8 @@ public class PostController {
 
     //게시글 작성
     @PostMapping("/auth/post")
-    public ResponseDto<?> createPost(@RequestBody PostRequestDto requestDto, HttpServletRequest request){
-        return postService.createPost(requestDto, request);
+    public ResponseDto<?> createPost(@RequestPart PostRequestDto requestDto, @RequestPart MultipartFile multipartFile ,HttpServletRequest request){
+        return postService.createPost(requestDto, multipartFile, request);
 
     }
 
@@ -40,8 +41,8 @@ public class PostController {
 
     //상세게시글 수정
     @PutMapping("/auth/post/{postId}")
-    public PostResponseDto updatePost(@PathVariable Long postId, @RequestBody PostRequestDto requestDto){
-        return postService.updatePost(postId, requestDto);
+    public ResponseDto<?> updatePost(@PathVariable Long postId, @RequestPart PostRequestDto requestDto, @RequestPart MultipartFile multipartFile, HttpServletRequest request){
+        return postService.updatePost(postId, requestDto, multipartFile, request);
 
     }
 
