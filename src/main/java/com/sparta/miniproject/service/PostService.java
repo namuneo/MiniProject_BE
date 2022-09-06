@@ -61,12 +61,17 @@ public class PostService {
                 .title(requestDto.getTitle())
                 .content(requestDto.getContent())
                 .imgUrl(FileName)
+        Member member = tokenProvider.getMemberFromAuthentication();
+        Post post = Post.builder()
+                .title(requestDto.getTitle())
+                .content(requestDto.getContent())
                 .member(member)
                 .build();
         postRepository.save(post);
         return ResponseDto.success(
                 PostResponseDto.builder()
-                        .postId(post.getPostId())
+                        .postId(post.getId())
+                        .nickname(member.getNickname())
                         .title(post.getTitle())
                         .content(post.getContent())
                         .author(post.getMember().getNickname())
@@ -93,8 +98,10 @@ public class PostService {
         );
         //생성자 대신 builder로 사용가능
 
+        Member member = tokenProvider.getMemberFromAuthentication();
         return PostResponseDto.builder()
-                .postId(post.getPostId())
+                .postId(post.getId())
+                .nickname(member.getNickname())
                 .title(post.getTitle())
                 .content(post.getContent())
                 .createdAt(post.getCreatedAt())
@@ -142,6 +149,15 @@ public class PostService {
         requestDto.setImgUrl(FileName);
         post.update(requestDto);
         return ResponseDto.success(post);
+        Member member = tokenProvider.getMemberFromAuthentication();
+        return PostResponseDto.builder()
+                .postId(post.getId())
+                .nickname(member.getNickname())
+                .title(post.getTitle())
+                .content(post.getContent())
+                .createdAt(post.getCreatedAt())
+                .modifiedAt(post.getModifiedAt())
+                .build();
     }
 
     //게시글 삭제
@@ -150,7 +166,14 @@ public class PostService {
         Post post = postRepository.findById(postId).orElseThrow(       //필요한 정보를 찾고  -> 그 정보를 업데이트
                 () -> new IllegalArgumentException("게시글이 존재하지 않습니다.")
         );
-        postRepository.deleteById(postId);
+        postRepository.delete(post);
+    }
+
+
+    @Transactional(readOnly = true)
+    public Post existingPost(Long id) {
+        Optional<Post> optionalPost = postRepository.findById(id);
+        return optionalPost.orElse(null);
     }
 
     @Transactional
