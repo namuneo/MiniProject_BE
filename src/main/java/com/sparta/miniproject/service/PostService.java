@@ -3,6 +3,7 @@ package com.sparta.miniproject.service;
 import com.sparta.miniproject.controller.request.PostRequestDto;
 import com.sparta.miniproject.controller.response.PostResponseDto;
 import com.sparta.miniproject.controller.response.ResponseDto;
+import com.sparta.miniproject.domain.Member;
 import com.sparta.miniproject.domain.Post;
 import com.sparta.miniproject.jwt.TokenProvider;
 import com.sparta.miniproject.repository.PostRepository;
@@ -36,16 +37,17 @@ public class PostService {
             return ResponseDto.fail("MEMBER_NOT_FOUND",
                     "로그인이 필요합니다.");
         }
-
+        Member member = tokenProvider.getMemberFromAuthentication();
         Post post = Post.builder()
                 .title(requestDto.getTitle())
                 .content(requestDto.getContent())
+                .member(member)
                 .build();
         postRepository.save(post);
         return ResponseDto.success(
                 PostResponseDto.builder()
-                        .postId(post.getPostId())
-
+                        .postId(post.getId())
+                        .nickname(member.getNickname())
                         .title(post.getTitle())
                         .content(post.getContent())
                         .createdAt(post.getCreatedAt())
@@ -72,8 +74,10 @@ public class PostService {
         );
         //생성자 대신 builder로 사용가능
 
+        Member member = tokenProvider.getMemberFromAuthentication();
         return PostResponseDto.builder()
-                .postId(post.getPostId())
+                .postId(post.getId())
+                .nickname(member.getNickname())
                 .title(post.getTitle())
                 .content(post.getContent())
                 .createdAt(post.getCreatedAt())
@@ -91,8 +95,10 @@ public class PostService {
         post.update(requestDto);
         postRepository.save(post);
 
+        Member member = tokenProvider.getMemberFromAuthentication();
         return PostResponseDto.builder()
-                .postId(post.getPostId())
+                .postId(post.getId())
+                .nickname(member.getNickname())
                 .title(post.getTitle())
                 .content(post.getContent())
                 .createdAt(post.getCreatedAt())
@@ -106,7 +112,14 @@ public class PostService {
         Post post = postRepository.findById(postId).orElseThrow(       //필요한 정보를 찾고  -> 그 정보를 업데이트
                 () -> new IllegalArgumentException("게시글이 존재하지 않습니다.")
         );
-        postRepository.deleteById(postId);
+        postRepository.delete(post);
+    }
+
+
+    @Transactional(readOnly = true)
+    public Post existingPost(Long id) {
+        Optional<Post> optionalPost = postRepository.findById(id);
+        return optionalPost.orElse(null);
     }
 
 }

@@ -8,6 +8,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
+import java.util.List;
 
 @Builder
 @AllArgsConstructor
@@ -18,7 +19,7 @@ public class Post extends Timestamped{
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long postId;
+    private Long id;
 
     @Column(nullable = false)
     private String title;
@@ -29,15 +30,28 @@ public class Post extends Timestamped{
     @Column(nullable = true)
     private String imgUrl;
 
-//    public Post(PostRequestDto requestDto){               //생성자  13분 32초
-//        this.title = requestDto.getTitle();
-//        this.content =requestDto.getContent();
-//    }
 
-    public void update(PostRequestDto requestDto){
+    //댓글 연관관계
+    @OneToMany(mappedBy="post", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private List<Comment> comments;
+
+    @JoinColumn(name = "member_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    private Member member;
+
+
+
+    public void update(PostRequestDto requestDto) {
         this.title = requestDto.getTitle();
         this.content = requestDto.getContent();
         this.imgUrl = requestDto.getImgUrl();
-
     }
+
+   //comment에 필요해서 추가
+    public boolean validateMember(Member member) {
+
+        return !this.member.equals(member);
+    }
+
+
 }

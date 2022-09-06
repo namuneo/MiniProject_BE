@@ -48,6 +48,7 @@ public class Member extends Timestamped{
         return getClass().hashCode();
     }
 
+
     public boolean validatePassword(PasswordEncoder passwordEncoder, String password) {
         return passwordEncoder.matches(password, this.password);
     }
