@@ -3,20 +3,22 @@ package com.sparta.miniproject.domain;
 
 import com.sparta.miniproject.controller.request.PostRequestDto;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
 
+@Builder
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
 @Entity
-public class Post {
+public class Post extends Timestamped{
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Long postId;
 
     @Column(nullable = false)
     private String title;
@@ -27,10 +29,10 @@ public class Post {
     @Column(nullable = true)
     private String imgUrl;
 
-    public Post(PostRequestDto requestDto){               //생성자  13분 32초
-        this.title = requestDto.getTitle();
-        this.content =requestDto.getContent();
-    }
+//    public Post(PostRequestDto requestDto){               //생성자  13분 32초
+//        this.title = requestDto.getTitle();
+//        this.content =requestDto.getContent();
+//    }
 
     public void update(PostRequestDto requestDto){
         this.title = requestDto.getTitle();

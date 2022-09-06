@@ -2,7 +2,9 @@ package com.sparta.miniproject.service;
 
 import com.sparta.miniproject.controller.request.PostRequestDto;
 import com.sparta.miniproject.controller.response.PostResponseDto;
+import com.sparta.miniproject.controller.response.ResponseDto;
 import com.sparta.miniproject.domain.Post;
+import com.sparta.miniproject.jwt.TokenProvider;
 import com.sparta.miniproject.repository.PostRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -10,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -19,27 +22,46 @@ import java.util.Optional;
 public class PostService {
 
     private final PostRepository postRepository;           //의존성 주입
+    private final TokenProvider tokenProvider;
 
     //게시글 작성
-    public void createPost(PostRequestDto requestDto){   //controller에서 매개변수 받아올 때 같은 타입으로
-        Post post =new Post(requestDto);                 //postman이 아니라 controller에서 준거라서 @body 가 필요없음
+    @Transactional
+    public ResponseDto<?> createPost(PostRequestDto requestDto, HttpServletRequest request){      //controller에서 매개변수 받아올 때 같은 타입으로
+        if (null == request.getHeader("Refresh-Token")) {
+            return ResponseDto.fail("MEMBER_NOT_FOUND",
+                    "로그인이 필요합니다.");
+        }
+
+        if (null == request.getHeader("Authorization")) {
+            return ResponseDto.fail("MEMBER_NOT_FOUND",
+                    "로그인이 필요합니다.");
+        }
+
+        Post post = Post.builder()
+                .title(requestDto.getTitle())
+                .content(requestDto.getContent())
+                .build();
         postRepository.save(post);
+        return ResponseDto.success(
+                PostResponseDto.builder()
+                        .postId(post.getPostId())
 
+                        .title(post.getTitle())
+                        .content(post.getContent())
+                        .createdAt(post.getCreatedAt())
+                        .modifiedAt(post.getModifiedAt())
+                        .build()
+        );
 
-
-    //이미지 업로드 추가 필요
+        //이미지 업로드 추가 필요
     }
 
     //전체게시글 조회
-    public List<PostResponseDto> postList() {
-        List<Post> post = postRepository.findAll();
-        List<PostResponseDto> postResponseDtoList = new ArrayList<>();            //빈 리스트 만들어주고
+    @Transactional(readOnly = true)
+    public ResponseDto<?> getAllPost() {
 
-        for (int i=0; i< post.size(); i++){
-            PostResponseDto postResponseDto = new PostResponseDto(post.get(i));     //하나하나 생성자 만들어주고 넣어주기
-            postResponseDtoList.add(postResponseDto);
-        }
-        return postResponseDtoList;
+        return ResponseDto.success(postRepository.findAllByOrderByModifiedAtDesc());
+//        return ResponseDto.success(listResponse.getPostListResponse(postList));
     }
 
 
@@ -48,9 +70,15 @@ public class PostService {
         Post post = postRepository.findById(postId).orElseThrow(
                 () -> new IllegalArgumentException("게시글이 존재하지 않습니다.")       //예외처리
         );
+        //생성자 대신 builder로 사용가능
 
-        PostResponseDto responseDto = new PostResponseDto(post);       //생성자 대신 builder로 사용가능
-        return responseDto;
+        return PostResponseDto.builder()
+                .postId(post.getPostId())
+                .title(post.getTitle())
+                .content(post.getContent())
+                .createdAt(post.getCreatedAt())
+                .modifiedAt(post.getModifiedAt())
+                .build();
 
     }
 
@@ -58,12 +86,18 @@ public class PostService {
     @Transactional
     public PostResponseDto updatePost(Long postId, PostRequestDto requestDto){
         Post post = postRepository.findById(postId).orElseThrow(
-            () -> new IllegalArgumentException("게시글이 존재하지 않습니다.")
+                () -> new IllegalArgumentException("게시글이 존재하지 않습니다.")
         );
         post.update(requestDto);
         postRepository.save(post);
-        PostResponseDto responseDto = new PostResponseDto(post);
-        return responseDto;
+
+        return PostResponseDto.builder()
+                .postId(post.getPostId())
+                .title(post.getTitle())
+                .content(post.getContent())
+                .createdAt(post.getCreatedAt())
+                .modifiedAt(post.getModifiedAt())
+                .build();
     }
 
     //게시글 삭제
