@@ -19,7 +19,7 @@ public class Post extends Timestamped{
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Long postId;
 
     @Column(nullable = false)
     private String title;
@@ -38,12 +38,6 @@ public class Post extends Timestamped{
     @OneToMany(mappedBy="post", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<Comment> comments;
 
-    @JoinColumn(name = "member_id", nullable = false)
-    @ManyToOne(fetch = FetchType.LAZY)
-    private Member member;
-
-
-
     public void update(PostRequestDto requestDto) {
         this.title = requestDto.getTitle();
         this.content = requestDto.getContent();
@@ -52,7 +46,6 @@ public class Post extends Timestamped{
 
    //comment에 필요해서 추가
     public boolean validateMember(Member member) {
-
         return !this.member.equals(member);
     }
 

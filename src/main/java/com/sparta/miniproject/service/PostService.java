@@ -57,20 +57,17 @@ public class PostService {
             }
         }
 
+//        Member member = tokenProvider.getMemberFromAuthentication();
         Post post = Post.builder()
                 .title(requestDto.getTitle())
                 .content(requestDto.getContent())
                 .imgUrl(FileName)
-        Member member = tokenProvider.getMemberFromAuthentication();
-        Post post = Post.builder()
-                .title(requestDto.getTitle())
-                .content(requestDto.getContent())
                 .member(member)
                 .build();
         postRepository.save(post);
         return ResponseDto.success(
                 PostResponseDto.builder()
-                        .postId(post.getId())
+                        .postId(post.getPostId())
                         .nickname(member.getNickname())
                         .title(post.getTitle())
                         .content(post.getContent())
@@ -100,7 +97,7 @@ public class PostService {
 
         Member member = tokenProvider.getMemberFromAuthentication();
         return PostResponseDto.builder()
-                .postId(post.getId())
+                .postId(post.getPostId())
                 .nickname(member.getNickname())
                 .title(post.getTitle())
                 .content(post.getContent())
@@ -149,15 +146,8 @@ public class PostService {
         requestDto.setImgUrl(FileName);
         post.update(requestDto);
         return ResponseDto.success(post);
-        Member member = tokenProvider.getMemberFromAuthentication();
-        return PostResponseDto.builder()
-                .postId(post.getId())
-                .nickname(member.getNickname())
-                .title(post.getTitle())
-                .content(post.getContent())
-                .createdAt(post.getCreatedAt())
-                .modifiedAt(post.getModifiedAt())
-                .build();
+//        Member member = tokenProvider.getMemberFromAuthentication();
+
     }
 
     //게시글 삭제
