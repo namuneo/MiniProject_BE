@@ -68,7 +68,6 @@ public class PostService {
         return ResponseDto.success(
                 PostResponseDto.builder()
                         .postId(post.getPostId())
-                        .nickname(member.getNickname())
                         .title(post.getTitle())
                         .content(post.getContent())
                         .author(post.getMember().getNickname())
@@ -95,12 +94,12 @@ public class PostService {
         );
         //생성자 대신 builder로 사용가능
 
-        Member member = tokenProvider.getMemberFromAuthentication();
         return PostResponseDto.builder()
                 .postId(post.getPostId())
-                .nickname(member.getNickname())
                 .title(post.getTitle())
                 .content(post.getContent())
+                .imgUrl(post.getImgUrl())
+                .author(post.getMember().getNickname())
                 .createdAt(post.getCreatedAt())
                 .modifiedAt(post.getModifiedAt())
                 .build();
@@ -135,7 +134,7 @@ public class PostService {
             }
         }
 
-        Post post = isPresentPost(postId);
+        Post post = existingPost(postId);
         if (null == post) {
             return ResponseDto.fail("NOT_FOUND", "존재하지 않는 게시글 id 입니다.");
         }
@@ -146,7 +145,6 @@ public class PostService {
         requestDto.setImgUrl(FileName);
         post.update(requestDto);
         return ResponseDto.success(post);
-//        Member member = tokenProvider.getMemberFromAuthentication();
 
     }
 
@@ -172,12 +170,6 @@ public class PostService {
             return null;
         }
         return tokenProvider.getMemberFromAuthentication();
-    }
-
-    @Transactional(readOnly = true)
-    public Post isPresentPost(Long id) {
-        Optional<Post> optionalPost = postRepository.findById(id);
-        return optionalPost.orElse(null);
     }
 
 }

@@ -20,7 +20,7 @@ public class PostController {
 
     //게시글 작성
     @PostMapping("/auth/post")
-    public ResponseDto<?> createPost(@RequestPart PostRequestDto requestDto, @RequestPart MultipartFile multipartFile ,HttpServletRequest request){
+    public ResponseDto<?> createPost(@RequestPart PostRequestDto requestDto, @RequestPart(required = false) MultipartFile multipartFile ,HttpServletRequest request){
         return postService.createPost(requestDto, multipartFile, request);
 
     }
@@ -41,7 +41,7 @@ public class PostController {
 
     //상세게시글 수정
     @PutMapping("/auth/post/{postId}")
-    public ResponseDto<?> updatePost(@PathVariable Long postId, @RequestPart PostRequestDto requestDto, @RequestPart MultipartFile multipartFile, HttpServletRequest request){
+    public ResponseDto<?> updatePost(@PathVariable Long postId, @RequestPart PostRequestDto requestDto, @RequestPart(required = false) MultipartFile multipartFile, HttpServletRequest request){
         return postService.updatePost(postId, requestDto, multipartFile, request);
 
     }
