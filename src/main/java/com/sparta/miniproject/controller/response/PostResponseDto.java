@@ -1,7 +1,6 @@
 package com.sparta.miniproject.controller.response;
 
-import com.sparta.miniproject.controller.request.PostRequestDto;
-import com.sparta.miniproject.domain.Post;
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -13,6 +12,7 @@ import java.time.LocalDateTime;
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
+@JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
 public class PostResponseDto {
     private Long postId;
     private String title;
@@ -21,13 +21,4 @@ public class PostResponseDto {
     private String imgUrl;
     private LocalDateTime createdAt;
     private LocalDateTime modifiedAt;
-
-
-
-//    public PostResponseDto(Post post){   //매개변수 이름 확인필요
-//        this.postId =post.getId();
-//        this.title=post.getTitle();
-//        this.content=post.getContent();
-//    }
-
 }

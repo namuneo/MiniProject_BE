@@ -1,6 +1,8 @@
 package com.sparta.miniproject.domain;
 
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.sparta.miniproject.controller.request.PostRequestDto;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -15,6 +17,7 @@ import java.util.List;
 @NoArgsConstructor
 @Getter
 @Entity
+@JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
 public class Post extends Timestamped{
 
     @Id
@@ -31,11 +34,12 @@ public class Post extends Timestamped{
     private String imgUrl;
 
     @JoinColumn(name = "member_id", nullable = false)
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     private Member member;
 
     //댓글 연관관계
-    @OneToMany(mappedBy="post", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @OneToMany(mappedBy="post", cascade = CascadeType.ALL)
+    @JsonIgnore
     private List<Comment> comments;
 
     public void update(PostRequestDto requestDto) {

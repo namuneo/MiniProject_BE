@@ -1,5 +1,6 @@
 package com.sparta.miniproject.service;
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.sparta.miniproject.controller.request.PostRequestDto;
 import com.sparta.miniproject.controller.response.PostResponseDto;
 import com.sparta.miniproject.controller.response.ResponseDto;
@@ -23,6 +24,7 @@ import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
+@JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
 public class PostService {
 
     private final PostRepository postRepository;           //의존성 주입
@@ -150,11 +152,26 @@ public class PostService {
 
     //게시글 삭제
     @Transactional
-    public void deletePost(@PathVariable Long postId){
-        Post post = postRepository.findById(postId).orElseThrow(       //필요한 정보를 찾고  -> 그 정보를 업데이트
-                () -> new IllegalArgumentException("게시글이 존재하지 않습니다.")
-        );
+    public ResponseDto<?> deletePost(@PathVariable Long postId, HttpServletRequest request){
+//        Post post = postRepository.findById(postId).orElseThrow(       //필요한 정보를 찾고  -> 그 정보를 업데이트
+//                () -> new IllegalArgumentException("게시글이 존재하지 않습니다.")
+//        );
+
+        Member member = validateMember(request);
+        if (null == member) {
+            return ResponseDto.fail("INVALID_TOKEN", "Token이 유효하지 않습니다.");
+        }
+
+        Post post = existingPost(postId);
+        if (null == post) {
+            return ResponseDto.fail("NOT_FOUND", "존재하지 않는 게시글 id 입니다.");
+        }
+
+        if (post.validateMember(member)) {
+            return ResponseDto.fail("BAD_REQUEST", "작성자만 삭제할 수 있습니다.");
+        }
         postRepository.delete(post);
+        return ResponseDto.success("삭제가 완료 되었습니다");
     }
 
 

@@ -48,9 +48,9 @@ public class PostController {
 
     //상세게시글 삭제
     @DeleteMapping("/auth/post/{postId}")
-    public String deletePost(@PathVariable Long postId){
-        postService.deletePost(postId);
-        return "게시글 삭제 성공";
+    public ResponseDto<?> deletePost(@PathVariable Long postId, HttpServletRequest request){
+        return postService.deletePost(postId, request);
+//        return "게시글 삭제 성공";
     }
 
 }
